@@ -126,22 +126,24 @@ function definirMensagem() {
 function comecarImportacao() {
   const lista = document.getElementById('listaContatos');
   lista.innerHTML = '';
+
   contatosGlobais.forEach((c, i) => {
     const nome = c["Nome"] || "Sem Nome";
 
-    const numeroOriginal = c["Fone Atual"] || '';
-    // Remove tudo que não for número para garantir o formato correto
+    // Pega o número original direto da planilha, sem formatação extra
+    let numeroOriginal = c["Fone Atual"] || '';
+
+    // Remove tudo que não for número (para garantir link válido)
     const numeroFormatado = numeroOriginal.toString().replace(/\D/g, '');
 
-    const mensagem = mensagemPadrao.includes('{nome}')
-      ? mensagemPadrao.replace('{nome}', nome)
-      : `Olá ${nome}, ${mensagemPadrao}`;
-
-    const linkWhatsapp = `https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}`;
-
-    const contatoDiv = document.createElement("div");
-    contatoDiv.className = "contato";
-    contatoDiv.id = `contato-${i}`;
+    // Só cria o link se tiver número
+    const linkWhatsapp = numeroFormatado
+      ? `https://wa.me/${numeroFormatado}?text=${encodeURIComponent(
+          mensagemPadrao.includes('{nome}')
+            ? mensagemPadrao.replace('{nome}', nome)
+            : `Olá ${nome}, ${mensagemPadrao}`
+        )}`
+      : '#';
 
     let detalhesHtml = Object.entries(c).map(
       ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
@@ -149,7 +151,7 @@ function comecarImportacao() {
 
     detalhesHtml += `
       <a href="${linkWhatsapp}" target="_blank" rel="noopener noreferrer">
-        <button class="btn">Enviar mensagem</button>
+        <button class="btn" ${numeroFormatado ? '' : 'disabled'}>Enviar mensagem</button>
       </a>
     `;
 
@@ -159,6 +161,10 @@ function comecarImportacao() {
       <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
       <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
     `;
+
+    const contatoDiv = document.createElement("div");
+    contatoDiv.className = "contato";
+    contatoDiv.id = `contato-${i}`;
 
     contatoDiv.innerHTML = `
       <div class="nome">
