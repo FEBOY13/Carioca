@@ -123,26 +123,26 @@
       if (msg) mensagemPadrao = msg;
     }
 
+    function formatarNumero(numero) {
+      if (!numero) return '';
+      numero = numero.toString().replace(/\D/g, '');
+      if (numero.startsWith('55') && numero.length === 13) {
+        return numero;
+      } else if (numero.length === 11) {
+        return '55' + numero;
+      } else if (numero.length === 9) {
+        return '5511' + numero;
+      } else {
+        return '';
+      }
+    }
+
     function comecarImportacao() {
       const lista = document.getElementById('listaContatos');
       lista.innerHTML = '';
       contatosGlobais.forEach((c, i) => {
         const nome = c["Nome"] || "Sem Nome";
-        let numeroRaw = (c["Fone Atual"] || "").toString();
-
-        numeroRaw = numeroRaw.replace(/\D/g, ''); // remove tudo que não for número
-        numeroRaw = numeroRaw.replace(/^0+/, ''); // remove zeros à esquerda
-
-        // Corrige e valida o número
-        if (numeroRaw.startsWith('55') && numeroRaw.length === 13) {
-          // ok
-        } else {
-          if (numeroRaw.length === 11 || numeroRaw.length === 10) {
-            numeroRaw = '55' + numeroRaw;
-          } else {
-            numeroRaw = ''; // número inválido
-          }
-        }
+        let numeroFormatado = formatarNumero(c["Fone Atual"]);
 
         const mensagem = mensagemPadrao.includes('{nome}')
           ? mensagemPadrao.replace('{nome}', nome)
@@ -152,13 +152,21 @@
         contatoDiv.className = "contato";
         contatoDiv.id = `contato-${i}`;
 
-        const detalhesHtml = `
-          ${Object.entries(c).map(([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`).join('')}
-          ${numeroRaw
-            ? `<a href="https://wa.me/${numeroRaw}?text=${encodeURIComponent(mensagem)}" target="_blank">
-                <button class="btn">Enviar mensagem</button>
-              </a>`
-            : `<p style="color: red;">Número inválido</p>`}
+        let detalhesHtml = Object.entries(c).map(
+          ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
+        ).join('');
+
+        if (numeroFormatado) {
+          detalhesHtml += `
+            <a href="https://wa.me/${numeroFormatado}?text=${encodeURIComponent(mensagem)}" target="_blank">
+              <button class="btn">Enviar mensagem</button>
+            </a>
+          `;
+        } else {
+          detalhesHtml += `<div style="color:red;"><strong>Número inválido</strong></div>`;
+        }
+
+        detalhesHtml += `
           <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
           <button class="resultado-btn verde" onclick="setResultado(${i}, 'SUCESSO')"></button>
           <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
