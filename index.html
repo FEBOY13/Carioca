@@ -112,7 +112,7 @@
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        contatosGlobais = XLSX.utils.sheet_to_json(worksheet);
+        contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false }); // <- mantém os dados como texto
         alert('Arquivo carregado! Clique em "Começar".');
       };
       reader.readAsArrayBuffer(file);
@@ -128,10 +128,17 @@
       lista.innerHTML = '';
       contatosGlobais.forEach((c, i) => {
         const nome = c["Nome"] || "Sem Nome";
+
         let numeroRaw = c["Fone Atual"] || "";
-        numeroRaw = String(numeroRaw);
-        let numero = numeroRaw.replace(/\D/g, '');
-        if (!numero.startsWith('55')) numero = '55' + numero;
+        numeroRaw = String(numeroRaw).replace(/\D/g, '');
+
+        // Remover zeros no início
+        numeroRaw = numeroRaw.replace(/^0+/, '');
+
+        // Adiciona 55 se não tiver DDI
+        if (!numeroRaw.startsWith('55')) {
+          numeroRaw = '55' + numeroRaw;
+        }
 
         const mensagem = mensagemPadrao.includes('{nome}')
           ? mensagemPadrao.replace('{nome}', nome)
@@ -148,7 +155,7 @@
           </div>
           <div class="detalhes" id="detalhes-${i}">
             ${Object.entries(c).map(([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`).join('')}
-            <a href="https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}" target="_blank">
+            <a href="https://wa.me/${numeroRaw}?text=${encodeURIComponent(mensagem)}" target="_blank">
               <button class="btn">Enviar mensagem</button>
             </a>
             <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
