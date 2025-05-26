@@ -126,11 +126,11 @@
     function formatarNumero(numero) {
       if (!numero) return '';
       numero = String(numero).replace(/\D/g, '').replace(/^0+/, '');
-      if (numero.length === 13 && numero.startsWith('55')) return numero;
+      if (numero.startsWith('55') && numero.length === 13) return numero;
       if (numero.length === 11) return '55' + numero;
-      if (numero.length === 9) return '5511' + numero;
       if (numero.length === 10) return '55' + numero;
-      return numero; // Mesmo se for estranho, retorna
+      if (numero.length === 9) return '5511' + numero;
+      return '';
     }
 
     function comecarImportacao() {
@@ -155,9 +155,9 @@
           ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
         ).join('');
 
-        // Mostra o botão sempre
+        // Botão aparece sempre, com o link correto
         detalhesHtml += `
-          <a href="https://wa.me/${numeroFormatado}?text=${encodeURIComponent(mensagem)}" target="_blank">
+          <a href="https://wa.me/${numeroFormatado}?text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
             <button class="btn">Enviar mensagem</button>
           </a>
         `;
