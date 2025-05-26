@@ -112,7 +112,7 @@
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false }); // <- mantém os dados como texto
+        contatosGlobais = XLSX.utils.sheet_to_json(worksheet);
         alert('Arquivo carregado! Clique em "Começar".');
       };
       reader.readAsArrayBuffer(file);
@@ -128,14 +128,16 @@
       lista.innerHTML = '';
       contatosGlobais.forEach((c, i) => {
         const nome = c["Nome"] || "Sem Nome";
+        let numeroRaw = (c["Fone Atual"] || "").toString().trim();
 
-        let numeroRaw = c["Fone Atual"] || "";
-        numeroRaw = String(numeroRaw).replace(/\D/g, '');
+        // LIMPEZA E TRATAMENTO DO NÚMERO
+        numeroRaw = numeroRaw.replace(/\D/g, '');          // remove tudo que não é número
+        numeroRaw = numeroRaw.replace(/^0+/, '');          // remove zeros iniciais
 
-        // Remover zeros no início
-        numeroRaw = numeroRaw.replace(/^0+/, '');
+        if (numeroRaw.length < 10) {
+          numeroRaw = '11' + numeroRaw; // insere DDD default SP se não tiver
+        }
 
-        // Adiciona 55 se não tiver DDI
         if (!numeroRaw.startsWith('55')) {
           numeroRaw = '55' + numeroRaw;
         }
