@@ -1,149 +1,23 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Lista de Contatos</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: url(logo.png) no-repeat center center fixed;
-      background-size: cover;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.2);
-      margin-top: 40px;
-    }
-    .contato {
-      background: #fff;
-      margin-bottom: 10px;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 0 5px #ccc;
-      transition: background 0.5s;
-    }
-    .nome {
-      font-weight: bold;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .detalhes {
-      display: none;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-    .detalhes div {
-      margin-bottom: 5px;
-    }
-    .btn {
-      padding: 8px 14px;
-      background-color: green;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 5px 5px 0 0;
-      font-size: 14px;
-    }
-    .btn:hover {
-      background-color: #0b6d0b;
-    }
-    .icone {
-      font-size: 18px;
-      cursor: pointer;
-      background: none;
-      border: none;
-    }
-    .top-btns {
-      margin-bottom: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-    }
-    .resultado-btn {
-      width: 30px;
-      height: 30px;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      margin-left: 5px;
-      transition: transform 0.2s ease-in-out, background 0.3s ease;
-    }
-    .verde { background-color: green; }
-    .amarelo { background-color: gold; }
-    .vermelho { background-color: red; }
-    .resultado-btn:active { transform: scale(1.1); }
-    @media (max-width: 600px) {
-      .btn, .resultado-btn { font-size: 14px; padding: 6px 10px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="top-btns">
-      <input type="file" id="inputExcel" accept=".xlsx" />
-      <button class="btn" onclick="definirMensagem()">Mensagem Pré Definida</button>
-      <button class="btn" onclick="comecarImportacao()">Começar</button>
-      <button class="btn" onclick="novaLista()">Nova Lista</button>
-      <button class="btn" onclick="baixarRelatorio()">Baixar Relatório</button>
-    </div>
-
-    <div id="listaContatos"></div>
-  </div>
-
-<script>
-let contatosGlobais = [];
-let mensagemPadrao = 'Olá, estou entrando em contato conforme nosso cadastro!';
-
-document.getElementById('inputExcel').addEventListener('change', function (e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false });
-    alert('Arquivo carregado! Clique em "Começar".');
-  };
-  reader.readAsArrayBuffer(file);
-});
-
-function definirMensagem() {
-  const msg = prompt('Digite a mensagem padrão:');
-  if (msg) mensagemPadrao = msg;
-}
-
 function comecarImportacao() {
   const lista = document.getElementById('listaContatos');
   lista.innerHTML = '';
-
   contatosGlobais.forEach((c, i) => {
     const nome = c["Nome"] || "Sem Nome";
 
-    // Pega o número original direto da planilha, sem formatação extra
-    let numeroOriginal = c["Fone Atual"] || '';
-
-    // Remove tudo que não for número (para garantir link válido)
+    const numeroOriginal = c["Fone Atual"] || '';
+    // Remove tudo que não for número para garantir o formato correto
     const numeroFormatado = numeroOriginal.toString().replace(/\D/g, '');
 
-    // Só cria o link se tiver número
-    const linkWhatsapp = numeroFormatado
-      ? `https://wa.me/${numeroFormatado}?text=${encodeURIComponent(
-          mensagemPadrao.includes('{nome}')
-            ? mensagemPadrao.replace('{nome}', nome)
-            : `Olá ${nome}, ${mensagemPadrao}`
-        )}`
-      : '#';
+    const mensagem = mensagemPadrao.includes('{nome}')
+      ? mensagemPadrao.replace('{nome}', nome)
+      : `Olá ${nome}, ${mensagemPadrao}`;
+
+    // Link usando wa.me, que é mais simples e oficial
+    const linkWhatsapp = `https://wa.me/${numeroFormatado}?text=${encodeURIComponent(mensagem)}`;
+
+    const contatoDiv = document.createElement("div");
+    contatoDiv.className = "contato";
+    contatoDiv.id = `contato-${i}`;
 
     let detalhesHtml = Object.entries(c).map(
       ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
@@ -151,7 +25,7 @@ function comecarImportacao() {
 
     detalhesHtml += `
       <a href="${linkWhatsapp}" target="_blank" rel="noopener noreferrer">
-        <button class="btn" ${numeroFormatado ? '' : 'disabled'}>Enviar mensagem</button>
+        <button class="btn">Enviar mensagem</button>
       </a>
     `;
 
@@ -161,10 +35,6 @@ function comecarImportacao() {
       <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
       <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
     `;
-
-    const contatoDiv = document.createElement("div");
-    contatoDiv.className = "contato";
-    contatoDiv.id = `contato-${i}`;
 
     contatoDiv.innerHTML = `
       <div class="nome">
@@ -178,40 +48,3 @@ function comecarImportacao() {
     contatosGlobais[i]['Resultado'] = '';
   });
 }
-
-function toggleDetalhes(index) {
-  const div = document.getElementById('detalhes-' + index);
-  div.style.display = div.style.display === 'none' || div.style.display === '' ? 'block' : 'none';
-}
-
-function setResultado(index, valor) {
-  contatosGlobais[index]['Resultado'] = valor;
-  const div = document.getElementById('contato-' + index);
-  let cor = valor === 'SUCESSO' ? '#d4edda' : valor === 'Podemos tentar novamente' ? '#fff3cd' : '#f8d7da';
-  div.style.transition = 'background 0.5s ease';
-  div.style.background = cor;
-}
-
-function copiarInfo(index) {
-  const contato = contatosGlobais[index];
-  let texto = Object.entries(contato).map(([k, v]) => `${k}: ${v}`).join('\n');
-  navigator.clipboard.writeText(texto).then(() => alert("Informações copiadas!"));
-}
-
-function baixarRelatorio() {
-  const ws = XLSX.utils.json_to_sheet(contatosGlobais);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
-  XLSX.writeFile(wb, "relatorio_contatos.xlsx");
-}
-
-function novaLista() {
-  if (confirm("Tem certeza que quer importar uma nova lista? Não esqueça de baixar o relatório!")) {
-    document.getElementById('listaContatos').innerHTML = '';
-    contatosGlobais = [];
-  }
-}
-</script>
-
-</body>
-</html>
