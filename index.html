@@ -195,30 +195,6 @@
         contatosGlobais = [];
       }
     }
-
-    // --- INICIO DAS RESTRIÇÕES REQUERIDAS ---
-
-    // Bloquear clique com botão direito
-    document.addEventListener('contextmenu', event => event.preventDefault());
-
-    // Bloquear teclas de devtools (F12, Ctrl+Shift+I/J, Ctrl+U)
-    document.addEventListener('keydown', function (event) {
-      if (
-        event.key === 'F12' ||
-        (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J')) ||
-        (event.ctrlKey && event.key === 'U')
-      ) {
-        event.preventDefault();
-      }
-    });
-
-    // Bloquear acesso se não for mobile (baseado no user-agent)
-    if (!/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-      alert("Este site só pode ser aberto em dispositivos móveis.");
-      document.body.innerHTML = "";
-    }
-
-    // --- FIM DAS RESTRIÇÕES ---
   </script>
 </body>
 </html>
