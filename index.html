@@ -6,7 +6,6 @@
   <title>Lista de Contatos</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
   <style>
-    /* Seu CSS aqui (igual ao que você já tem) */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -124,20 +123,7 @@ function definirMensagem() {
   if (msg) mensagemPadrao = msg;
 }
 
-function formatarNumero(numero) {
-  if (!numero) return '';
-  // Força ser string, remove tudo que não for número, remove zeros à esquerda
-  let numStr = String(numero).trim().replace(/\D/g, '').replace(/^0+/, '');
-  
-  alert(`Número antes: "${numero}"\nNúmero formatado: "${numStr}"`); // ALERT para debug
-
-  // Valida e formata
-  if (numStr.startsWith('55') && numStr.length === 13) return numStr;
-  if (numStr.length === 11) return '55' + numStr;
-  if (numStr.length === 10) return '55' + numStr; // fixo + DDD
-  if (numStr.length === 9) return '5511' + numStr; // adiciona DDD 11 padrão
-  return '';
-}
+// **REMOVIDA a função de formatar número** — usar número exatamente como está
 
 function comecarImportacao() {
   const lista = document.getElementById('listaContatos');
@@ -145,10 +131,9 @@ function comecarImportacao() {
   contatosGlobais.forEach((c, i) => {
     const nome = c["Nome"] || "Sem Nome";
 
+    // Usa o número exatamente como veio do Excel, sem formatação nem alteração
     let numeroOriginal = c["Fone Atual"];
     if (!numeroOriginal) numeroOriginal = '';
-
-    const numeroFormatado = formatarNumero(numeroOriginal);
 
     const mensagem = mensagemPadrao.includes('{nome}')
       ? mensagemPadrao.replace('{nome}', nome)
@@ -163,7 +148,7 @@ function comecarImportacao() {
     ).join('');
 
     detalhesHtml += `
-      <a href="https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
+      <a href="https://api.whatsapp.com/send?phone=${encodeURIComponent(numeroOriginal)}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
         <button class="btn">Enviar mensagem</button>
       </a>
     `;
