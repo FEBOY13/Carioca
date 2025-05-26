@@ -112,7 +112,7 @@
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        contatosGlobais = XLSX.utils.sheet_to_json(worksheet);
+        contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false }); // Força como texto
         alert('Arquivo carregado! Clique em "Começar".');
       };
       reader.readAsArrayBuffer(file);
@@ -125,13 +125,18 @@
 
     function formatarNumero(numero) {
       if (!numero) return '';
-      numero = numero.toString().replace(/\D/g, '');
-      if (numero.startsWith('55') && numero.length === 13) {
+
+      numero = String(numero).replace(/[^\d]/g, ''); // Remove tudo que não for número
+      numero = numero.replace(/^0+/, ''); // Remove zeros à esquerda
+
+      if (numero.length === 13 && numero.startsWith('55')) {
         return numero;
       } else if (numero.length === 11) {
         return '55' + numero;
       } else if (numero.length === 9) {
         return '5511' + numero;
+      } else if (numero.length === 10 && numero.startsWith('1')) {
+        return '55' + numero;
       } else {
         return '';
       }
