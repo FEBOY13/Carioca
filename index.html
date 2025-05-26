@@ -123,21 +123,21 @@ function definirMensagem() {
   if (msg) mensagemPadrao = msg;
 }
 
-// **REMOVIDA a função de formatar número** — usar número exatamente como está
-
 function comecarImportacao() {
   const lista = document.getElementById('listaContatos');
   lista.innerHTML = '';
   contatosGlobais.forEach((c, i) => {
     const nome = c["Nome"] || "Sem Nome";
 
-    // Usa o número exatamente como veio do Excel, sem formatação nem alteração
-    let numeroOriginal = c["Fone Atual"];
-    if (!numeroOriginal) numeroOriginal = '';
+    const numeroOriginal = c["Fone Atual"] || '';
+    // Remove tudo que não for número para garantir o formato correto
+    const numeroFormatado = numeroOriginal.toString().replace(/\D/g, '');
 
     const mensagem = mensagemPadrao.includes('{nome}')
       ? mensagemPadrao.replace('{nome}', nome)
       : `Olá ${nome}, ${mensagemPadrao}`;
+
+    const linkWhatsapp = `https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}`;
 
     const contatoDiv = document.createElement("div");
     contatoDiv.className = "contato";
@@ -148,7 +148,7 @@ function comecarImportacao() {
     ).join('');
 
     detalhesHtml += `
-      <a href="https://api.whatsapp.com/send?phone=${encodeURIComponent(numeroOriginal)}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
+      <a href="${linkWhatsapp}" target="_blank" rel="noopener noreferrer">
         <button class="btn">Enviar mensagem</button>
       </a>
     `;
