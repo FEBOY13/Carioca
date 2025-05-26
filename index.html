@@ -6,7 +6,6 @@
   <title>Lista de Contatos</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
   <style>
-    /* Seu CSS aqui (igual ao que você já tem) */
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -101,126 +100,123 @@
     <div id="listaContatos"></div>
   </div>
 
-<script>
-let contatosGlobais = [];
-let mensagemPadrao = 'Olá, estou entrando em contato conforme nosso cadastro!';
+  <script>
+    let contatosGlobais = [];
+    let mensagemPadrao = 'Olá, estou entrando em contato conforme nosso cadastro!';
 
-document.getElementById('inputExcel').addEventListener('change', function (e) {
-  const file = e.target.files[0];
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false });
-    alert('Arquivo carregado! Clique em "Começar".');
-  };
-  reader.readAsArrayBuffer(file);
-});
+    document.getElementById('inputExcel').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        contatosGlobais = XLSX.utils.sheet_to_json(worksheet, { raw: false });
+        alert('Arquivo carregado! Clique em "Começar".');
+      };
+      reader.readAsArrayBuffer(file);
+    });
 
-function definirMensagem() {
-  const msg = prompt('Digite a mensagem padrão:');
-  if (msg) mensagemPadrao = msg;
-}
+    function definirMensagem() {
+      const msg = prompt('Digite a mensagem padrão:');
+      if (msg) mensagemPadrao = msg;
+    }
 
-function formatarNumero(numero) {
-  if (!numero) return '';
-  // Força ser string, remove tudo que não for número, remove zeros à esquerda
-  let numStr = String(numero).trim().replace(/\D/g, '').replace(/^0+/, '');
-  
-  alert(`Número antes: "${numero}"\nNúmero formatado: "${numStr}"`); // ALERT para debug
+    function formatarNumero(numero) {
+      if (!numero) return '';
+      let numStr = String(numero).replace(/\D/g, '').replace(/^0+/, '');
+      console.log('Número original:', numero, 'Formatado:', numStr);
 
-  // Valida e formata
-  if (numStr.startsWith('55') && numStr.length === 13) return numStr;
-  if (numStr.length === 11) return '55' + numStr;
-  if (numStr.length === 10) return '55' + numStr; // fixo + DDD
-  if (numStr.length === 9) return '5511' + numStr; // adiciona DDD 11 padrão
-  return '';
-}
+      if (numStr.startsWith('55') && numStr.length === 13) return numStr;
+      if (numStr.length === 11) return '55' + numStr;
+      if (numStr.length === 10) return '55' + numStr; // considera DDD + número fixo
+      if (numStr.length === 9) return '5511' + numStr; // adiciona DDD 11 padrão
+      return ''; // número inválido
+    }
 
-function comecarImportacao() {
-  const lista = document.getElementById('listaContatos');
-  lista.innerHTML = '';
-  contatosGlobais.forEach((c, i) => {
-    const nome = c["Nome"] || "Sem Nome";
+    function comecarImportacao() {
+      const lista = document.getElementById('listaContatos');
+      lista.innerHTML = '';
+      contatosGlobais.forEach((c, i) => {
+        const nome = c["Nome"] || "Sem Nome";
 
-    let numeroOriginal = c["Fone Atual"];
-    if (!numeroOriginal) numeroOriginal = '';
+        let numeroOriginal = c["Fone Atual"];
+        if (!numeroOriginal) numeroOriginal = '';
 
-    const numeroFormatado = formatarNumero(numeroOriginal);
+        const numeroFormatado = formatarNumero(numeroOriginal);
 
-    const mensagem = mensagemPadrao.includes('{nome}')
-      ? mensagemPadrao.replace('{nome}', nome)
-      : `Olá ${nome}, ${mensagemPadrao}`;
+        const mensagem = mensagemPadrao.includes('{nome}')
+          ? mensagemPadrao.replace('{nome}', nome)
+          : `Olá ${nome}, ${mensagemPadrao}`;
 
-    const contatoDiv = document.createElement("div");
-    contatoDiv.className = "contato";
-    contatoDiv.id = `contato-${i}`;
+        const contatoDiv = document.createElement("div");
+        contatoDiv.className = "contato";
+        contatoDiv.id = `contato-${i}`;
 
-    let detalhesHtml = Object.entries(c).map(
-      ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
-    ).join('');
+        let detalhesHtml = Object.entries(c).map(
+          ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
+        ).join('');
 
-    detalhesHtml += `
-      <a href="https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
-        <button class="btn">Enviar mensagem</button>
-      </a>
-    `;
+        // Sempre exibe o botão com o link, mesmo que número esteja vazio
+        detalhesHtml += `
+          <a href="https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
+            <button class="btn">Enviar mensagem</button>
+          </a>
+        `;
 
-    detalhesHtml += `
-      <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
-      <button class="resultado-btn verde" onclick="setResultado(${i}, 'SUCESSO')"></button>
-      <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
-      <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
-    `;
+        detalhesHtml += `
+          <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
+          <button class="resultado-btn verde" onclick="setResultado(${i}, 'SUCESSO')"></button>
+          <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
+          <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
+        `;
 
-    contatoDiv.innerHTML = `
-      <div class="nome">
-        ${nome}
-        <button class="icone" onclick="toggleDetalhes(${i})">👁️</button>
-      </div>
-      <div class="detalhes" id="detalhes-${i}">${detalhesHtml}</div>
-    `;
+        contatoDiv.innerHTML = `
+          <div class="nome">
+            ${nome}
+            <button class="icone" onclick="toggleDetalhes(${i})">👁️</button>
+          </div>
+          <div class="detalhes" id="detalhes-${i}">${detalhesHtml}</div>
+        `;
 
-    lista.appendChild(contatoDiv);
-    contatosGlobais[i]['Resultado'] = '';
-  });
-}
+        lista.appendChild(contatoDiv);
+        contatosGlobais[i]['Resultado'] = '';
+      });
+    }
 
-function toggleDetalhes(index) {
-  const div = document.getElementById('detalhes-' + index);
-  div.style.display = div.style.display === 'none' || div.style.display === '' ? 'block' : 'none';
-}
+    function toggleDetalhes(index) {
+      const div = document.getElementById('detalhes-' + index);
+      div.style.display = div.style.display === 'none' || div.style.display === '' ? 'block' : 'none';
+    }
 
-function setResultado(index, valor) {
-  contatosGlobais[index]['Resultado'] = valor;
-  const div = document.getElementById('contato-' + index);
-  let cor = valor === 'SUCESSO' ? '#d4edda' : valor === 'Podemos tentar novamente' ? '#fff3cd' : '#f8d7da';
-  div.style.transition = 'background 0.5s ease';
-  div.style.background = cor;
-}
+    function setResultado(index, valor) {
+      contatosGlobais[index]['Resultado'] = valor;
+      const div = document.getElementById('contato-' + index);
+      let cor = valor === 'SUCESSO' ? '#d4edda' : valor === 'Podemos tentar novamente' ? '#fff3cd' : '#f8d7da';
+      div.style.transition = 'background 0.5s ease';
+      div.style.background = cor;
+    }
 
-function copiarInfo(index) {
-  const contato = contatosGlobais[index];
-  let texto = Object.entries(contato).map(([k, v]) => `${k}: ${v}`).join('\n');
-  navigator.clipboard.writeText(texto).then(() => alert("Informações copiadas!"));
-}
+    function copiarInfo(index) {
+      const contato = contatosGlobais[index];
+      let texto = Object.entries(contato).map(([k, v]) => `${k}: ${v}`).join('\n');
+      navigator.clipboard.writeText(texto).then(() => alert("Informações copiadas!"));
+    }
 
-function baixarRelatorio() {
-  const ws = XLSX.utils.json_to_sheet(contatosGlobais);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
-  XLSX.writeFile(wb, "relatorio_contatos.xlsx");
-}
+    function baixarRelatorio() {
+      const ws = XLSX.utils.json_to_sheet(contatosGlobais);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Relatorio");
+      XLSX.writeFile(wb, "relatorio_contatos.xlsx");
+    }
 
-function novaLista() {
-  if (confirm("Tem certeza que quer importar uma nova lista? Não esqueça de baixar o relatório!")) {
-    document.getElementById('listaContatos').innerHTML = '';
-    contatosGlobais = [];
-  }
-}
-</script>
-
+    function novaLista() {
+      if (confirm("Tem certeza que quer importar uma nova lista? Não esqueça de baixar o relatório!")) {
+        document.getElementById('listaContatos').innerHTML = '';
+        contatosGlobais = [];
+      }
+    }
+  </script>
 </body>
 </html>
