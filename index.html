@@ -128,18 +128,20 @@
       lista.innerHTML = '';
       contatosGlobais.forEach((c, i) => {
         const nome = c["Nome"] || "Sem Nome";
-        let numeroRaw = (c["Fone Atual"] || "").toString().trim();
+        let numeroRaw = (c["Fone Atual"] || "").toString();
 
-        // LIMPEZA E TRATAMENTO DO NÚMERO
-        numeroRaw = numeroRaw.replace(/\D/g, '');          // remove tudo que não é número
-        numeroRaw = numeroRaw.replace(/^0+/, '');          // remove zeros iniciais
+        numeroRaw = numeroRaw.replace(/\D/g, ''); // remove tudo que não for número
+        numeroRaw = numeroRaw.replace(/^0+/, ''); // remove zeros à esquerda
 
-        if (numeroRaw.length < 10) {
-          numeroRaw = '11' + numeroRaw; // insere DDD default SP se não tiver
-        }
-
-        if (!numeroRaw.startsWith('55')) {
-          numeroRaw = '55' + numeroRaw;
+        // Corrige e valida o número
+        if (numeroRaw.startsWith('55') && numeroRaw.length === 13) {
+          // ok
+        } else {
+          if (numeroRaw.length === 11 || numeroRaw.length === 10) {
+            numeroRaw = '55' + numeroRaw;
+          } else {
+            numeroRaw = ''; // número inválido
+          }
         }
 
         const mensagem = mensagemPadrao.includes('{nome}')
@@ -150,20 +152,26 @@
         contatoDiv.className = "contato";
         contatoDiv.id = `contato-${i}`;
 
+        const detalhesHtml = `
+          ${Object.entries(c).map(([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`).join('')}
+          ${numeroRaw
+            ? `<a href="https://wa.me/${numeroRaw}?text=${encodeURIComponent(mensagem)}" target="_blank">
+                <button class="btn">Enviar mensagem</button>
+              </a>`
+            : `<p style="color: red;">Número inválido</p>`}
+          <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
+          <button class="resultado-btn verde" onclick="setResultado(${i}, 'SUCESSO')"></button>
+          <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
+          <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
+        `;
+
         contatoDiv.innerHTML = `
           <div class="nome">
             ${nome}
             <button class="icone" onclick="toggleDetalhes(${i})">👁️</button>
           </div>
           <div class="detalhes" id="detalhes-${i}">
-            ${Object.entries(c).map(([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`).join('')}
-            <a href="https://wa.me/${numeroRaw}?text=${encodeURIComponent(mensagem)}" target="_blank">
-              <button class="btn">Enviar mensagem</button>
-            </a>
-            <button class="btn" onclick="copiarInfo(${i})">Copiar</button>
-            <button class="resultado-btn verde" onclick="setResultado(${i}, 'SUCESSO')"></button>
-            <button class="resultado-btn amarelo" onclick="setResultado(${i}, 'Podemos tentar novamente')"></button>
-            <button class="resultado-btn vermelho" onclick="setResultado(${i}, 'KIKADO')"></button>
+            ${detalhesHtml}
           </div>
         `;
 
