@@ -125,12 +125,14 @@
 
     function formatarNumero(numero) {
       if (!numero) return '';
-      numero = String(numero).replace(/\D/g, '').replace(/^0+/, '');
-      if (numero.startsWith('55') && numero.length === 13) return numero;
-      if (numero.length === 11) return '55' + numero;
-      if (numero.length === 10) return '55' + numero;
-      if (numero.length === 9) return '5511' + numero;
-      return '';
+      let numStr = String(numero).replace(/\D/g, '').replace(/^0+/, '');
+      console.log('Número original:', numero, 'Formatado:', numStr);
+
+      if (numStr.startsWith('55') && numStr.length === 13) return numStr;
+      if (numStr.length === 11) return '55' + numStr;
+      if (numStr.length === 10) return '55' + numStr; // considera DDD + número fixo
+      if (numStr.length === 9) return '5511' + numStr; // adiciona DDD 11 padrão
+      return ''; // número inválido
     }
 
     function comecarImportacao() {
@@ -138,8 +140,10 @@
       lista.innerHTML = '';
       contatosGlobais.forEach((c, i) => {
         const nome = c["Nome"] || "Sem Nome";
+
         let numeroOriginal = c["Fone Atual"];
-        numeroOriginal = numeroOriginal ? String(numeroOriginal).replace(/\D/g, '') : '';
+        if (!numeroOriginal) numeroOriginal = '';
+
         const numeroFormatado = formatarNumero(numeroOriginal);
 
         const mensagem = mensagemPadrao.includes('{nome}')
@@ -154,6 +158,7 @@
           ([chave, valor]) => `<div><strong>${chave}:</strong> ${valor}</div>`
         ).join('');
 
+        // Sempre exibe o botão com o link, mesmo que número esteja vazio
         detalhesHtml += `
           <a href="https://api.whatsapp.com/send?phone=${numeroFormatado}&text=${encodeURIComponent(mensagem)}" target="_blank" rel="noopener noreferrer">
             <button class="btn">Enviar mensagem</button>
